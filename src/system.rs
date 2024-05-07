@@ -1,16 +1,21 @@
-use std::collections::BTreeMap;
-use crate::types::{ AccountId, Nonce, BlockNumber };
+use std::{ collections::BTreeMap, ops::AddAssign };
+use num::traits::{ Zero, One };
 
 #[derive(Debug)]
-pub struct Pallet {
+pub struct Pallet<BlockNumber, AccountId, Nonce> {
     block_number: BlockNumber,
     nonce: BTreeMap<AccountId, Nonce>,
 }
 
-impl Pallet {
+impl<BlockNumber, AccountId, Nonce> Pallet<BlockNumber, AccountId, Nonce>
+    where
+        BlockNumber: Zero + One + AddAssign + Copy,
+        AccountId: Ord + Clone,
+        Nonce: Zero + One + Copy
+{
     pub fn new() -> Self {
         Self {
-            block_number: 0,
+            block_number: BlockNumber::zero(),
             nonce: BTreeMap::new(),
         }
     }
@@ -20,14 +25,14 @@ impl Pallet {
     }
 
     pub fn inc_block_number(&mut self) {
-        self.block_number += 1;
+        self.block_number += BlockNumber::one();
     }
 
     // Increment the nonce of an account. This helps us keep track of how many transactions each
     // account has made.
     pub fn inc_nonce(&mut self, who: &AccountId) {
-        let nonce = *self.nonce.get(who).unwrap_or(&0);
-        let new_nonce = nonce + 1;
+        let nonce = *self.nonce.get(who).unwrap_or(&Nonce::zero());
+        let new_nonce = nonce + Nonce::one();
         self.nonce.insert(who.clone(), new_nonce);
     }
 }
@@ -35,10 +40,11 @@ impl Pallet {
 #[cfg(test)]
 mod test {
     use crate::system::Pallet;
+    use crate::types::{ AccountId, BlockNumber, Nonce };
 
     #[test]
     fn init_system() {
-        let mut system = Pallet::new();
+        let mut system = Pallet::<BlockNumber, AccountId, Nonce>::new();
         system.inc_block_number();
         system.inc_nonce(&"alice".to_string());
 

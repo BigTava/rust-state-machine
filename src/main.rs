@@ -10,7 +10,7 @@ pub mod types {
 
 #[derive(Debug)]
 pub struct Runtime {
-    system: system::Pallet,
+    system: system::Pallet<types::BlockNumber, types::AccountId, types::Nonce>,
     balances: balances::Pallet<types::AccountId, types::Balance>,
 }
 
