@@ -11,7 +11,7 @@ pub mod types {
 #[derive(Debug)]
 pub struct Runtime {
     system: system::Pallet,
-    balances: balances::Pallet,
+    balances: balances::Pallet<types::AccountId, types::Balance>,
 }
 
 impl Runtime {
