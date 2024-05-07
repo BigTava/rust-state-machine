@@ -8,9 +8,16 @@ pub mod types {
     pub type Nonce = u32;
 }
 
+impl system::Config for Runtime {
+    type AccountId = types::AccountId;
+    type BlockNumber = types::BlockNumber;
+    type Nonce = types::Nonce;
+}
+
+pub trait Config {}
 #[derive(Debug)]
 pub struct Runtime {
-    system: system::Pallet<types::BlockNumber, types::AccountId, types::Nonce>,
+    system: system::Pallet<Self>,
     balances: balances::Pallet<types::AccountId, types::Balance>,
 }
 
