@@ -14,11 +14,16 @@ impl system::Config for Runtime {
     type Nonce = types::Nonce;
 }
 
+impl balances::Config for Runtime {
+    type AccountId = types::AccountId;
+    type Balance = types::Balance;
+}
+
 pub trait Config {}
 #[derive(Debug)]
 pub struct Runtime {
     system: system::Pallet<Self>,
-    balances: balances::Pallet<types::AccountId, types::Balance>,
+    balances: balances::Pallet<Self>,
 }
 
 impl Runtime {
