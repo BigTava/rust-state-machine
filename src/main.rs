@@ -15,7 +15,10 @@ pub mod types {
 }
 
 pub enum RuntimeCall {
-    // TODO: Not implemented yet.
+    BalancesTransfer {
+        to: types::AccountId,
+        amount: types::Balance,
+    },
 }
 
 #[derive(Debug)]
@@ -43,7 +46,12 @@ impl Dispatch for Runtime {
         caller: Self::Caller,
         runtime_call: Self::Call
     ) -> support::DispatchResult {
-        unimplemented!()
+        match runtime_call {
+            RuntimeCall::BalancesTransfer { to, amount } => {
+                self.balances.transfer(&caller, &to, amount)?;
+            }
+        }
+        Ok(())
     }
 }
 
@@ -57,8 +65,11 @@ impl Runtime {
 
     fn execute_bock(&mut self, block: types::Block) -> support::DispatchResult {
         self.system.inc_block_number();
-        assert_eq!(self.system.block_number(), block.header.block_number);
+        if block.header.block_number != self.system.block_number() {
+            return Err(&"block number foes not match what is expected");
+        }
         for (i, support::Extrinsic { caller, call }) in block.extrinsics.into_iter().enumerate() {
+            self.system.inc_nonce(&caller);
             let _res = self
                 .dispatch(caller, call)
                 .map_err(|e|
