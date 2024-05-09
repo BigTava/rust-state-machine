@@ -63,7 +63,7 @@ impl Runtime {
         }
     }
 
-    fn execute_bock(&mut self, block: types::Block) -> support::DispatchResult {
+    fn execute_block(&mut self, block: types::Block) -> support::DispatchResult {
         self.system.inc_block_number();
         if block.header.block_number != self.system.block_number() {
             return Err(&"block number foes not match what is expected");
@@ -89,15 +89,26 @@ fn main() {
     let alice = "alice".to_string();
     let bob = "bob".to_string();
     let charlie = "charlie".to_string();
+
     let mut runtime = Runtime::new();
+
     runtime.balances.set_balance(&alice, 100);
 
-    runtime.system.inc_block_number();
-    assert_eq!(runtime.system.block_number(), 1);
+    let block_1 = types::Block {
+        header: support::Header { block_number: 1 },
+        extrinsics: vec![
+            support::Extrinsic {
+                caller: alice.clone(),
+                call: RuntimeCall::BalancesTransfer { to: bob, amount: 20 },
+            },
+            support::Extrinsic {
+                caller: alice.clone(),
+                call: RuntimeCall::BalancesTransfer { to: charlie, amount: 20 },
+            }
+        ],
+    };
 
-    runtime.system.inc_nonce(&alice);
-    let _res = runtime.balances.transfer(&alice, &bob, 30).map_err(|e| eprintln!("{}", e));
+    runtime.execute_block(block_1).expect("invalid block");
 
-    runtime.system.inc_nonce(&alice);
-    let _res = runtime.balances.transfer(&alice, &charlie, 20).map_err(|e| eprintln!("{}", e));
+    println!("{:#?}", runtime);
 }
