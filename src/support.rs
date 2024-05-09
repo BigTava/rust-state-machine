@@ -1,6 +1,5 @@
 pub struct Block<Header, Extrinsic> {
     pub header: Header,
-
     pub extrinsics: Vec<Extrinsic>,
 }
 

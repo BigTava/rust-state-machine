@@ -7,6 +7,19 @@ pub mod types {
     pub type Balance = u128;
     pub type BlockNumber = u32;
     pub type Nonce = u32;
+    pub type Extrinsic = crate::support::Extrinsic<AccountId, crate::RuntimeCall>;
+    pub type Header = crate::support::Header<BlockNumber>;
+    pub type Block = crate::support::Block<Header, Extrinsic>;
+}
+
+pub enum RuntimeCall {
+    // TODO: Not implemented yet.
+}
+
+#[derive(Debug)]
+pub struct Runtime {
+    system: system::Pallet<Self>,
+    balances: balances::Pallet<Self>,
 }
 
 impl system::Config for Runtime {
@@ -17,13 +30,6 @@ impl system::Config for Runtime {
 
 impl balances::Config for Runtime {
     type Balance = types::Balance;
-}
-
-pub trait Config {}
-#[derive(Debug)]
-pub struct Runtime {
-    system: system::Pallet<Self>,
-    balances: balances::Pallet<Self>,
 }
 
 impl Runtime {
