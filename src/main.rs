@@ -13,6 +13,7 @@ pub mod types {
     pub type Extrinsic = crate::support::Extrinsic<AccountId, crate::RuntimeCall>;
     pub type Header = crate::support::Header<BlockNumber>;
     pub type Block = crate::support::Block<Header, Extrinsic>;
+    pub type Content = &'static str;
 }
 
 pub enum RuntimeCall {

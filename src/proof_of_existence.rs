@@ -7,13 +7,76 @@ pub trait Config: crate::system::Config {
 
 #[derive(Debug)]
 pub struct Pallet<T: Config> {
-    content: BTreeMap<T::Content, T::AccountId>,
+    claims: BTreeMap<T::Content, T::AccountId>,
 }
 
 impl<T: Config> Pallet<T> {
     pub fn new() -> Self {
         Self {
-            content: BTreeMap::new(),
+            claims: BTreeMap::new(),
         }
+    }
+
+    pub fn get_claim(&self, claim: &T::Content) -> Option<&T::AccountId> {
+        self.claims.get(claim)
+    }
+
+    pub fn create_claim(
+        &mut self,
+        caller: T::AccountId,
+        claim: T::Content
+    ) -> crate::support::DispatchResult {
+        if self.claims.contains_key(&claim) {
+            return Err(&"This content is already claimed");
+        }
+        self.claims.insert(claim, caller);
+        Ok(())
+    }
+
+    pub fn revoke_claim(
+        &mut self,
+        caller: T::AccountId,
+        claim: T::Content
+    ) -> crate::support::DispatchResult {
+        let owner = self.get_claim(&claim).ok_or("Claim does not exist")?;
+        if caller != *owner {
+            return Err(&"You are not the owner of this claim");
+        }
+        self.claims.remove(&claim);
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod test {
+    struct TestConfig;
+    use crate::types::{ AccountId, BlockNumber, Nonce, Content };
+
+    impl super::Config for TestConfig {
+        type Content = Content;
+    }
+
+    impl crate::system::Config for TestConfig {
+        type AccountId = AccountId;
+        type BlockNumber = BlockNumber;
+        type Nonce = Nonce;
+    }
+
+    #[test]
+    fn basic_proof_of_existence() {
+        let alice = "alice".to_string();
+        let bob = "bob".to_string();
+        let alice_claim = "alice_claim";
+        let bob_claim = "bob_claim";
+
+        let mut proof_of_existence = super::Pallet::<TestConfig>::new();
+
+        assert_eq!(proof_of_existence.get_claim(&alice_claim), None);
+        assert_eq!(proof_of_existence.create_claim(alice.clone(), &alice_claim), Ok(()));
+        assert_eq!(proof_of_existence.get_claim(&alice_claim), Some(&alice));
+
+        assert_eq!(proof_of_existence.create_claim(bob.clone(), &bob_claim), Ok(()));
+        assert_eq!(proof_of_existence.revoke_claim(bob.clone(), bob_claim), Ok(()));
+        assert_eq!(proof_of_existence.create_claim(bob, &bob_claim), Ok(()));
     }
 }
