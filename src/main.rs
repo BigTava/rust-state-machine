@@ -18,12 +18,14 @@ pub mod types {
 
 pub enum RuntimeCall {
     Balances(balances::Call<Runtime>),
+    ProofOfExistence(proof_of_existence::Call<Runtime>),
 }
 
 #[derive(Debug)]
 pub struct Runtime {
     system: system::Pallet<Self>,
     balances: balances::Pallet<Self>,
+    poe: proof_of_existence::Pallet<Self>,
 }
 
 impl system::Config for Runtime {
@@ -34,6 +36,10 @@ impl system::Config for Runtime {
 
 impl balances::Config for Runtime {
     type Balance = types::Balance;
+}
+
+impl proof_of_existence::Config for Runtime {
+    type Content = types::Content;
 }
 
 impl Dispatch for Runtime {
@@ -49,6 +55,9 @@ impl Dispatch for Runtime {
             RuntimeCall::Balances(call) => {
                 self.balances.dispatch(caller, call)?;
             }
+            RuntimeCall::ProofOfExistence(call) => {
+                self.poe.dispatch(caller, call)?;
+            }
         }
 
         Ok(())
@@ -60,6 +69,7 @@ impl Runtime {
         Self {
             system: system::Pallet::new(),
             balances: balances::Pallet::new(),
+            poe: proof_of_existence::Pallet::new(),
         }
     }
 
@@ -99,16 +109,40 @@ fn main() {
         extrinsics: vec![
             support::Extrinsic {
                 caller: alice.clone(),
-                call: RuntimeCall::Balances(balances::Call::Transfer { to: bob, amount: 30 }),
+                call: RuntimeCall::Balances(balances::Call::Transfer {
+                    to: bob.clone(),
+                    amount: 30,
+                }),
             },
             support::Extrinsic {
                 caller: alice.clone(),
-                call: RuntimeCall::Balances(balances::Call::Transfer { to: charlie, amount: 20 }),
+                call: RuntimeCall::Balances(balances::Call::Transfer {
+                    to: charlie.clone(),
+                    amount: 20,
+                }),
             }
         ],
     };
-
     runtime.execute_block(block_1).expect("invalid block");
+
+    let block_2 = types::Block {
+        header: support::Header { block_number: 2 },
+        extrinsics: vec![
+            support::Extrinsic {
+                caller: alice.clone(),
+                call: RuntimeCall::ProofOfExistence(proof_of_existence::Call::CreateClaim {
+                    claim: "Hellow World!",
+                }),
+            },
+            support::Extrinsic {
+                caller: bob.clone(),
+                call: RuntimeCall::ProofOfExistence(proof_of_existence::Call::RevokeClaim {
+                    claim: "False claim",
+                }),
+            }
+        ],
+    };
+    runtime.execute_block(block_2).expect("invalid block");
 
     println!("{:#?}", runtime);
 }

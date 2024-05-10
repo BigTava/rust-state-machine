@@ -47,6 +47,36 @@ impl<T: Config> Pallet<T> {
     }
 }
 
+pub enum Call<T: Config> {
+    CreateClaim {
+        claim: T::Content,
+    },
+    RevokeClaim {
+        claim: T::Content,
+    },
+}
+
+impl<T: Config> crate::support::Dispatch for Pallet<T> {
+    type Caller = T::AccountId;
+    type Call = Call<T>;
+
+    fn dispatch(
+        &mut self,
+        caller: Self::Caller,
+        call: Self::Call
+    ) -> crate::support::DispatchResult {
+        match call {
+            Call::CreateClaim { claim } => {
+                self.create_claim(caller, claim)?;
+            }
+            Call::RevokeClaim { claim } => {
+                self.revoke_claim(caller, claim)?;
+            }
+        }
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod test {
     struct TestConfig;
@@ -69,14 +99,14 @@ mod test {
         let alice_claim = "alice_claim";
         let bob_claim = "bob_claim";
 
-        let mut proof_of_existence = super::Pallet::<TestConfig>::new();
+        let mut poe = super::Pallet::<TestConfig>::new();
 
-        assert_eq!(proof_of_existence.get_claim(&alice_claim), None);
-        assert_eq!(proof_of_existence.create_claim(alice.clone(), &alice_claim), Ok(()));
-        assert_eq!(proof_of_existence.get_claim(&alice_claim), Some(&alice));
+        assert_eq!(poe.get_claim(&alice_claim), None);
+        assert_eq!(poe.create_claim(alice.clone(), &alice_claim), Ok(()));
+        assert_eq!(poe.get_claim(&alice_claim), Some(&alice));
 
-        assert_eq!(proof_of_existence.create_claim(bob.clone(), &bob_claim), Ok(()));
-        assert_eq!(proof_of_existence.revoke_claim(bob.clone(), bob_claim), Ok(()));
-        assert_eq!(proof_of_existence.create_claim(bob, &bob_claim), Ok(()));
+        assert_eq!(poe.create_claim(bob.clone(), &bob_claim), Ok(()));
+        assert_eq!(poe.revoke_claim(bob.clone(), bob_claim), Ok(()));
+        assert_eq!(poe.create_claim(bob, &bob_claim), Ok(()));
     }
 }
